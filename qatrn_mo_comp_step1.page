@@ -62,8 +62,23 @@ page qatrn_mo_comp_step1
 	end before
 	
     before Update
+		
+		buffer mosercomp
 
-      set xflagtrn="Updated"
+		set mosercomp.xserialnum=xserialnum
+		set mosercomp.xitem=xitem
+		set mosercomp.xstr01=xform
+		set mosercomp.xbatch=xbatch
+		set mosercomp.xtypein="Manufacturing Order"
+		set mosercomp.xnumin=xmornum
+		set mosercomp.xh101=xh101
+		set mosercomp.xh102=xh102
+		set mosercomp.xh103=xh103
+		set mosercomp.xh104=xh104
+		
+		insert mosercomp
+
+		set xflagtrn="Updated"
       
     end before
     
