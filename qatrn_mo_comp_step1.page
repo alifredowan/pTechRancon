@@ -197,9 +197,9 @@ page qatrn_mo_comp_step1
 		set globals(xform)=xform
 
 		set #fields(xlong->.visibility)="hidden"
-		set #fields(xserialnum->xtornum.attrib)="alt"
+		set #fields(xserialnum->xh104.attrib)="alt"
 		set #fields(xitem->xtornum.display)="const"
-		
+
 		if xserialnum .ne. ""
 			set availSl=#sql("select xserialnum from imser where zid='"+#id+"' and xserialnum='"+xserialnum+"' group by xserialnum")
 		
@@ -254,11 +254,14 @@ page qatrn_mo_comp_step1
         //nostd
         //nonav
         objects 
-          Refresh, Show,Clear,Add,Update,Delete,Confirm,Undo,print display(label) attrib(command;local),~
-		  *block 4 notag,~
-		  Pick display(hide),xserialnum,xitem width(30),xbatch caption(Batch),xmornum,xtornum,~
-		  *end block,~
-          xtrnnum display(trn QA Report) attrib(search) picklist(list qatrn),xdate,xcontext display(const),xform,xgrnnum display(hide),xflagtrn inherits(xflag) display(const),xlong,xnote,xmember,xteam,xmanager,Test display(hide)
+			Refresh, Show,Clear,Add,Update,Delete,Confirm,Undo,print display(label) attrib(command;local),~
+			*block 4 notag,~
+			Pick display(hide),xserialnum,xitem width(30),xbatch caption(Batch),xmornum,xtornum,~
+			*end block,~
+			*block 3 notag,~
+			xh101,xh102,xh103,xh104,~
+			*endblock,~
+			xtrnnum display(trn QA Report) attrib(search) picklist(list qatrn),xdate,xcontext display(const),xform,xgrnnum display(hide),xflagtrn inherits(xflag) display(const),xlong,xnote,xmember,xteam,xmanager,Test display(hide)
         end objects
 		
 		field xform
@@ -273,7 +276,27 @@ page qatrn_mo_comp_step1
 			 attrib Submit 
 			 width 30
 		end field
-
+		
+		field xh101
+			 caption Open Cell 
+			 attrib local
+		end field
+		
+		field xh102
+			 caption TCON Board 1 
+			 attrib local
+		end field
+		
+		field xh103
+			 caption TCON Board 2 
+			 attrib local
+		end field
+		
+		field xh104
+			 caption Panel SL 
+			 attrib local
+		end field
+	
      end form
   
 end page
