@@ -91,7 +91,7 @@ page qatrn_mo_comp_step1
       int k=#sql(int,"delete from caform_data where xcontext='"+xcontext+"' and xtrnnum='"+xtrnnum+"'")
     end after
 
-	before slQaAdd
+	/* before slQaAdd
 	   set ser_nm =  #decode(xserialnum)
 	   set itm_nm =  #decode(xitemprd)
 
@@ -139,7 +139,7 @@ page qatrn_mo_comp_step1
 			end if
 		end if
 		action Show
-    end before
+    end before */
 	
 
 	
@@ -190,12 +190,12 @@ page qatrn_mo_comp_step1
      
     end preconfig
     config
-		set #fields(xform.default)="Step-1"
+
 		set xcontext="QA"
 		set globals(xtrnnum)=xtrnnum
 		set globals(xcontext)=xcontext
 		set globals(xform)=xform
-		
+
 		set #fields(xlong->.visibility)="hidden"
 		set #fields(xserialnum->xtornum.attrib)="alt"
 		set #fields(xitem->xtornum.display)="const"
@@ -262,8 +262,8 @@ page qatrn_mo_comp_step1
         end objects
 		
 		field xform
-			default "Step-1"
 			//attrib submit
+			default "LCM"
 			caption Form No
 			display const
 			//picklist "select xform from caform where xcontext='"+xcontext+"'"
