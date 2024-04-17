@@ -1,0 +1,279 @@
+page qatrn_mo_comp_step1
+     caption "QA Transactions"
+     layout mylayout 1 1 1 //columns rows  tabrows
+       //group bpbarge,bpdata_pos,bpmap (1,1)` 
+       group qatrn_mo_step1,qatrnlst,docs (1,1)` 
+      
+     end layout
+
+	group qatrnlst 3 1 "Transaction List"
+			list qatrn (1,1)
+	end group
+	
+    group qatrn_mo_step1 3 1 "Transaction"
+
+		form qatrn_mo_step1,text caform_mo  (1, 1)
+		text sep (2, 1)
+			//list qatrn,list serpend (3,1)
+			script pTechUpdateFormDataScript (0, 0)
+		keys "Find xtrnnum=?"
+	end group
+
+    //#include qatrn_mo.include
+    #include cadocs.include
+	
+  text sep
+    "<table><tr><td>&nbsp;&nbsp;&nbsp;</td></tr></table>"
+  end text
+     
+  text print
+    //"<a href='"+#servlet+"?page=caform_print&xcontext="+xcontext+"&xform="+xform+"&xtrnnum="+xtrnnum+"&embeddedpage=2' target='Print' class='bt' >Print</a>"
+    "<div class='bt' onclick=""PrintElem('printFormID')"">Print</div>"
+  
+  end text
+  
+  
+  
+  valid qatrn
+   // mandatory Add, Update; xform
+	
+    before Add
+      set xmember=#user
+      set xcontext="QA"
+      set xflagtrn="New"
+	  
+		set availQA=#sql("select xtrnnum from qatrn where zid='"+#id+"' and xserialnum='"+xserialnum+"' and xform='Step-1' and xmornum<>'' and xtornum<>''")
+
+		set availSl=#sql("select xserialnum from imser where zid='"+#id+"' and xserialnum='"+xserialnum+"' group by xserialnum")
+		
+		if availSl .eq. ""
+				error "<font color='#C0392B' size=2><strong><span style='vertical-align: middle;'><font size=4>&#9888;</font></span> <span style='vertical-align: middle;'>Information Missing.<font color='#2980B9'> Please Provide valid Serial Number</font></span></strong></font>"		
+		else if availQA .ne. ""
+				error "<font color='#C0392B' size=2><strong><span style='vertical-align: middle;'><font size=4>&#9888;</font></span> <span style='vertical-align: middle;'>Information Missing.<font color='#2980B9'>"+availQA+" QA Already Available For Serial: "+xserialnum+"</font></span></strong></font>"
+		else
+			set xitem=#sql("select xitem from imser where zid="+#id+" and xserialnum='"+xserialnum+"'")
+				
+			set xmornum=#sql("select xnumin from imser where zid="+#id+" and xserialnum='"+xserialnum+"'")
+			
+			set xtornum=#sql("select xnumout from imser where zid="+#id+" and xserialnum='"+xserialnum+"'")
+				
+			set xbatch=#sql("select xbatch from moout where zid="+#id+" and xmornum='"+xmornum+"'")
+		end if
+	end before
+	
+    before Update
+
+      set xflagtrn="Updated"
+      
+    end before
+    
+    after Add, Update
+      
+		call caform_save_mo
+		
+		int failfldcount = 0 + #sql("select count(xvalue) from caform_data where zid='"+#id+"' and xcontext='"+xcontext+"' and xform='"+globals(xform)+"' and xname in (select xname from cafld where zid=caform_data.zid and xcontext=caform_data.xcontext and xform=caform_data.xform and xdisplay='radiobutton') and (xvalue='NG' or xvalue='') and xname<>'status' and xtypefld='2-Detail' and xtrnnum='"+xtrnnum+"'")
+		//print "select count(xvalue) from caform_data where zid='"+#id+"' and xcontext='"+xcontext+"' and xform='"+globals(xform)+"' and xname in (select xname from cafld where zid=caform_data.zid and xcontext=caform_data.xcontext and xform=caform_data.xform and xdisplay='radiobutton') and (xvalue='Yes' or xvalue='') and xname<>'status' and xtypefld='2-Detail' and xtrnnum='"+xtrnnum+"'"
+		//print failfldcount
+		
+		if failfldcount > 0
+			int k=#sql(int,"update caform_data set xvalue='Failed' where zid='"+#id+"' and xcontext='"+xcontext+"' and xform='"+globals(xform)+"' and xtrnnum='"+xtrnnum+"' and xname='status'")
+	
+		else
+			int k=#sql(int,"update caform_data set xvalue='Passed' where zid='"+#id+"' and xcontext='"+xcontext+"' and xform='"+globals(xform)+"' and xtrnnum='"+xtrnnum+"' and xname='status'")
+	
+		end if
+	  
+	  
+	  
+	  
+    end after
+    after Delete
+      int k=#sql(int,"delete from caform_data where xcontext='"+xcontext+"' and xtrnnum='"+xtrnnum+"'")
+    end after
+
+	before slQaAdd
+	   set ser_nm =  #decode(xserialnum)
+	   set itm_nm =  #decode(xitemprd)
+
+		buffer qatrn
+		set xtrnnum=#trn("QA Report","QA--")
+		set qatrn.xtrnnum=xtrnnum
+		set qatrn.xmornum=xmornum
+		set qatrn.xserialnum=xserialnum
+		set qatrn.xitem=xitem
+		set qatrn.xform="MO_QC"
+		set qatrn.xmember=#user
+		set qatrn.xcontext="QA"
+		set qatrn.xflagtrn="New"
+		
+		insert qatrn
+
+		if #result .eq. "True"
+
+ 
+			buffer caform_data 
+			move caform_data = cafld("xcontext = '"+qatrn.xcontext+"' and xform = '"+qatrn.xform+"' and xtypefld = '1-Header' and  xname = 'Serial' and zid = "+#id+"")
+			
+
+				set caform_data.xtypetrn="QA Transaction"
+				set caform_data.xtrnnum=xtrnnum
+			
+
+				set caform_data.xvalue= ser_nm
+			 
+			insert caform_data
+			if #result .eq. "false"
+				update caform_data("xcontext = '"+qatrn.xcontext+"' and xform = '"+qatrn.xform+"' and xtypefld = '1-Header' and  xname = 'Serial' and zid = "+#id+" and xtypetrn='QA Transaction' and xtrnnum='"+xtrnnum+"'" )
+			
+			end if
+       
+			move  caform_data= cafld("xcontext = '"+qatrn.xcontext+"' and xform = '"+qatrn.xform+"' and xtypefld = '1-Header' and xname = 'Item' and zid = "+#id+"")
+				set caform_data.xname="Item"
+
+				set caform_data.xvalue=itm_nm
+        
+			insert caform_data
+			 if #result .eq. "false"
+				update caform_data("xcontext = '"+qatrn.xcontext+"' and xform = '"+qatrn.xform+"' and xtypefld = '1-Header' and  xname = 'Serial' and zid = "+#id+" and xtypetrn='QA Transaction' and xtrnnum='"+xtrnnum+"'" )
+				
+			end if
+		end if
+		action Show
+    end before
+	
+
+	
+    before Undo
+      int k=#sql(int,"update qatrn set xflagtrn='Undone' where xtrnnum='"+xtrnnum+"'")
+	  set upsernote = #sql(int,"update imser set steponestat='' where zid='"+#id+"' and xserialnum='"+xserialnum+"' and xnumout=''")
+      set #command="Show"
+    end before
+	
+    before Confirm
+		int rdbtncount = 0 + #sql("select count(xdisplay) from cafld where zid='"+#id+"' and xcontext='"+xcontext+"' and xform='"+globals(xform)+"' and xdisplay='radiobutton'")
+		
+		int fldcount = 0 + #sql("select count(xvalue) from caform_data where zid='"+#id+"' and xcontext='"+xcontext+"' and xform='"+globals(xform)+"' and xtrnnum='"+xtrnnum+"' and xname in (select xname from cafld where zid=caform_data.zid and xcontext=caform_data.xcontext and xform=caform_data.xform and xdisplay='radiobutton')")
+		
+		int failfldcount = 0 + #sql("select count(xvalue) from caform_data where zid='"+#id+"' and xcontext='"+xcontext+"' and xform='"+globals(xform)+"' and xname in (select xname from cafld where zid=caform_data.zid and xcontext=caform_data.xcontext and xform=caform_data.xform and xdisplay='radiobutton') and (xvalue='NG' or xvalue='') and xname<>'status' and xtypefld='2-Detail' and xtrnnum='"+xtrnnum+"'")
+
+		if rdbtncount > fldcount
+			error "<font color='#C0392B' size=2><strong><span style='vertical-align: middle;'><font size=4>&#9888;</font></span> <span style='vertical-align: middle;'>Information Missing.<font color='#2980B9'> Please Provide Required Information.</font></span></strong></font>"
+			
+		else if failfldcount > 0
+			int k=#sql(int,"update caform_data set xvalue='Failed' where zid='"+#id+"' and xcontext='"+xcontext+"' and xform='"+globals(xform)+"' and xtrnnum='"+xtrnnum+"' and xname='status'")
+			set upsernote = #sql(int,"update imser set steponestat='QA Not Passed' where zid='"+#id+"' and xserialnum='"+xserialnum+"' and xnumout=''")
+			
+			int k=#sql(int,"update caform_data set xvalue='Not Passed' where zid='"+#id+"' and xcontext='"+xcontext+"' and xform='"+globals(xform)+"' and xtrnnum='"+xtrnnum+"' and xname='status'")
+			
+			//set xserialnum = #sql("select xvalue from caform_data where zid='"+#id+"' and xcontext='"+xcontext+"' and xform='"+globals(xform)+"' and xtrnnum='"+xtrnnum+"' and xname='Engine' and xtypefld='1-Header'")
+			
+			int k=#sql(int,"update qatrn set xflagtrn='Confirmed' where xtrnnum='"+xtrnnum+"'")
+			set #command="Show"
+
+			print "<font color='#C0392B' size=2><strong><span style='vertical-align: middle;'><font size=4>&#9888;</font></span> <span style='vertical-align: middle;'>QC Failed "+failfldcount+"</span></strong></font>"
+			/* <font color='#2980B9'> Cannot Confirm.</font>" */
+		else
+			int k=#sql(int,"update caform_data set xvalue='Passed' where zid='"+#id+"' and xcontext='"+xcontext+"' and xform='"+globals(xform)+"' and xtrnnum='"+xtrnnum+"' and xname='status'")
+
+			//set xserialnum = #sql("select xvalue from caform_data where zid='"+#id+"' and xcontext='"+xcontext+"' and xform='"+globals(xform)+"' and xtrnnum='"+xtrnnum+"' and xname='Engine' and xtypefld='1-Header'")
+
+			set upsernote = #sql(int,"update imser set steponestat='QA Passed' where zid='"+#id+"' and xserialnum='"+xserialnum+"' and xnumout=''")
+
+			int k=#sql(int,"update qatrn set xflagtrn='Confirmed' where xtrnnum='"+xtrnnum+"'")
+			set #command="Show"
+		end if
+    end before
+    
+    
+    preconfig
+      
+     
+    end preconfig
+    config
+		set #fields(xform.default)="Step-1"
+		set xcontext="QA"
+		set globals(xtrnnum)=xtrnnum
+		set globals(xcontext)=xcontext
+		set globals(xform)=xform
+		
+		set #fields(xlong->.visibility)="hidden"
+		set #fields(xserialnum->xtornum.attrib)="alt"
+		set #fields(xitem->xtornum.display)="const"
+		
+		if xserialnum .ne. ""
+			set availSl=#sql("select xserialnum from imser where zid='"+#id+"' and xserialnum='"+xserialnum+"' group by xserialnum")
+		
+			set availQA=#sql("select xtrnnum from qatrn where zid='"+#id+"' and xserialnum='"+xserialnum+"' and xform='Step-1' and xmornum<>'' and xtornum<>''")
+			
+			if availSl .eq. ""
+				error "<font color='#C0392B' size=2><strong><span style='vertical-align: middle;'><font size=4>&#9888;</font></span> <span style='vertical-align: middle;'>Information Missing.<font color='#2980B9'> Please Provide valid Serial Number</font></span></strong></font>"
+				set #fields(Add->Confirm.visibility)="disabled"			
+			else if availQA .ne. ""
+				error "<font color='#C0392B' size=2><strong><span style='vertical-align: middle;'><font size=4>&#9888;</font></span> <span style='vertical-align: middle;'>Information Missing.<font color='#2980B9'>"+availQA+" QA Already Available For Serial: "+xserialnum+"</font></span></strong></font>" 
+				set #fields(Add->Confirm.visibility)="disabled"
+			else
+				set xitem=#sql("select xitem from imser where zid="+#id+" and xserialnum='"+xserialnum+"'")
+					
+				set xmornum=#sql("select xnumin from imser where zid="+#id+" and xserialnum='"+xserialnum+"'")
+				
+				set xtornum=#sql("select xnumout from imser where zid="+#id+" and xserialnum='"+xserialnum+"'")
+					
+				set xbatch=#sql("select xbatch from moout where zid="+#id+" and xmornum='"+xmornum+"'")
+			end if
+		end if	
+		
+		if xflagtrn .eq. "Confirmed"
+			set #fields(Add->Confirm.visibility)="disabled"
+		else
+			set #fields(Undo.visibility)="disabled"
+		
+		end if
+			set globals(print)=#text(print)
+		if qatrn.xtrnnum(xtrnnum) .eq. ""
+			set #fields(Confirm.visibility)="disabled"
+			set #fields(Undo.visibility)="disabled"
+			set #list(serpend.attrib)="hide"
+			set globals(print)=""
+		end if
+		
+		set globals(xtypetrn)="QA Transaction"
+		set globals(xtrnnum)=xtrnnum
+		call caform_mo
+   end config
+  end valid
+  
+     form qatrn_mo_step1
+        caption "Transaction"
+        command Clear
+        table qatrn
+        order xtrnnum DESC
+        select "xform='"+xform+"'"
+        
+        valid qatrn
+        layout -5
+        //nostd
+        //nonav
+        objects 
+          Refresh, Show,Clear,Add,Update,Delete,Confirm,Undo,print display(label) attrib(command;local),~
+		  *block 4 notag,~
+		  Pick display(hide),xserialnum,xitem width(30),xbatch caption(Batch),xmornum,xtornum,~
+		  *end block,~
+          xtrnnum display(trn QA Report) attrib(search) picklist(list qatrn),xdate,xcontext display(const),xform,xgrnnum display(hide),xflagtrn inherits(xflag) display(const),xlong,xnote,xmember,xteam,xmanager,Test display(hide)
+        end objects
+		
+		field xform
+			default "Step-1"
+			//attrib submit
+			caption Form No
+			display const
+			//picklist "select xform from caform where xcontext='"+xcontext+"'"
+		end field
+		
+		field xserialnum
+			 attrib Submit 
+			 width 30
+		end field
+
+     end form
+  
+end page
