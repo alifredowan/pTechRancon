@@ -1,0 +1,167 @@
+page mosercomp
+    caption Component Serial Number
+     //sidebar list details, list neword,list active, list closed
+     //sections form one, method update_bo, script myscript
+//caption header
+    layout mylayout 1 1 1 //columns rows  tabrows
+       group typeone,typetwo,typethree (1,1)
+       //cuslink,itemlink,
+	   
+       script myscript,myserscriptgrn (0,0)
+    end layout
+
+    group typeone 1 2 "LCM Line"
+		form typeone  (1, 1)//(col,row,colspan,rowspan,width,height)
+		list typeone (1,2)
+		//access " xmornum .ne. "+#char(34)+#char(34)+" .and. xrowmor > 0 "
+		//keys "Top"
+    end group
+	
+	group typetwo 1 2 "Assembly Line"
+		form typetwo  (1, 1)//(col,row,colspan,rowspan,width,height)
+		list typetwo (1,2)
+		//access " xmornum .ne. "+#char(34)+#char(34)+" .and. xrowmor > 0 "
+		//keys "Top"
+    end group
+	
+	group typethree 1 2 "Packaging Line"
+		form typethree  (1, 1)//(col,row,colspan,rowspan,width,height)
+		list typethree (1,2)
+		//access " xmornum .ne. "+#char(34)+#char(34)+" .and. xrowmor > 0 "
+		//keys "Top"
+    end group
+
+    list typeone
+        caption "Serial Number List"
+        table mosercomp
+        order xitem,xserialnum
+        fixed xstr01,xserialnum
+        rows 10
+        objects ~
+        xserialnum attrib(link #servlet+"?page="+page+"&nexttab="+nexttab+"&command=Show&xstr01=?&xitem=?&xh101=?&xh102=?&xh103=?&xh104=?&xh105=?&xserialnum=?"),xitem,xbatch  caption(Batch),xmornum,xstr01 caption(Type Name),~
+		xh101 caption(Open Cell),xh102 caption(TCON Board 1),xh103 caption(TCON Board 2),xh104 caption(Panel SL)
+		
+		Totals count
+	end list
+
+
+
+    form typeone
+        caption ""
+		valid validtype
+        table mosercomp
+        order xitem,xserialnum,xstr01
+        //fixed xstr01
+        
+        layout 2
+        objects Show,Clear,Add,Update,Delete,xrow attrib(row 0 1;search) display(const),xserialnum attrib(Submit),xitem,xbatch  caption(Batch),xmornum,xstr01 display(hide),~
+		*block 3 notag,~
+		xh101 caption(Open Cell),xh102 caption(TCON Board 1),xh103 caption(TCON Board 2),xh104 caption(Panel SL),xh105 display(hide),~
+		*endblock,~
+		xnumin display(hide),xrowin display(hide),xtypein display(hide) 
+
+
+
+    end form
+
+	list typetwo
+        caption "Serial Number List"
+        table mosercomp
+        order xitem,xserialnum
+        fixed xstr01,xserialnum
+        rows 10
+        objects ~
+        xserialnum attrib(link #servlet+"?page="+page+"&nexttab="+nexttab+"&command=Show&xstr01=?&xitem=?&xh101=?&xh102=?&xh103=?&xh104=?&xh105=?&xserialnum=?"),xitem,xbatch  caption(Batch),xmornum,xstr01 caption(Type Name),~
+		xh101 caption(Main board),xh102 caption(Power board),xh103 caption(W. Module)
+		
+		Totals count
+	end list
+
+
+
+    form typetwo
+        caption ""
+		valid validtype
+        table mosercomp
+        order xitem,xserialnum,xstr01
+       //fixed xstr01
+        
+        layout 2
+        objects Show,Clear,Add,Update,Delete,xrow attrib(row 0 1;search) display(const),xserialnum attrib(Submit),xitem,xbatch  caption(Batch),xmornum,xstr01 display(hide),~
+		*block 3 notag,~
+		xh101 caption(Main board),xh102 caption(Power board),xh103 caption(W. Module),xh104 display(hide),xh105 display(hide),~
+		*endblock,~
+		xnumin display(hide),xrowin display(hide),xtypein display(hide) 
+
+
+
+    end form
+
+	
+	list typethree
+        caption "Serial Number List"
+        table mosercomp
+        order xitem,xserialnum
+        fixed xstr01,xserialnum
+        rows 10
+        objects ~
+        xserialnum attrib(link #servlet+"?page="+page+"&nexttab="+nexttab+"&command=Show&xstr01=?&xitem=?&xh101=?&xh102=?&xh103=?&xh104=?&xh105=?&xserialnum=?"),xitem,xbatch  caption(Batch),xmornum,xstr01 caption(Type Name),~
+		xh101,xh102,xh103,xh104,xh105
+		
+		Totals count
+	end list
+
+
+
+    form typethree
+        caption "Serial Numbers-Out"
+		valid validtype
+        table mosercomp
+        order xitem,xserialnum,xstr01
+        //fixed xstr01
+        
+        layout 2
+        objects Show,Clear,Add,Update,Delete,xrow attrib(row 0 1;search) display(const),xserialnum attrib(Submit),xitem,xbatch  caption(Batch),xmornum,xstr01 display(hide),~
+		*block 3 notag,~
+		xh101 caption(Remote),xh102 caption(User Manual),xh103 caption(STAND),xh104 display(hide),xh105 display(hide),~
+		*endblock,~
+		xnumin display(hide),xrowin display(hide),xtypein display(hide) 
+
+
+
+    end form
+
+    
+
+	valid validtype
+	
+		preconfig
+			set #field(xh101->xh105.attrib)="mandatory"
+		end preconfig
+		
+		config
+			
+			set #field(xserialnum->xh105.width)="20"
+			set #field(xh101->xh105.attrib)="alt"		
+			set #field(xitem->xstr01.display)="const"
+			set xname="xstr07"
+			set xdisplay="text"
+			set xdefault="abc"
+			str fld="val__2_"+xname+"_"+j+" display("+xdisplay+") default("+xdefault+")"   
+			
+			//str =#fields($fld,"abc")
+			
+			set xitem=#sql("select xitem from imser where zid="+#id+" and xserialnum='"+xserialnum+"'")
+			
+			set xmornum=#sql("select xnumin from imser where zid="+#id+" and xserialnum='"+xserialnum+"'")
+			
+			set xstr01=nexttab
+
+			set xbatch=#sql("select xbatch from moout where zid="+#id+" and xmornum='"+xmornum+"'")
+		end config
+		 
+	end valid
+
+
+
+end page
